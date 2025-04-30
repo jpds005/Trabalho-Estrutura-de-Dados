@@ -1,0 +1,394 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>  // Para toupper
+#include <conio.h>
+
+#define MAX_NOME 50
+#define MAX_COMORBIDADES 200
+#define MAX_TURMAS 12
+
+const char *anos_validos[MAX_TURMAS] = {
+    "1M", "1T", "2M", "2T", "3M", "3T",
+    "4M", "4T", "5M", "5T", "6M", "6T"
+};
+
+// ==================== ESTRUTURAS ====================
+
+typedef struct Aluno {
+    int matricula;
+    char nome[MAX_NOME];
+    char data_nascimento[11];
+    char comorbidades[MAX_COMORBIDADES];
+    char ano_escolar[3];
+    int ativo;
+    struct Aluno *prox;
+} Aluno;
+
+typedef struct Professor {
+    char ano_escolar[3];
+    char nome[MAX_NOME];
+    char telefone[16];
+    char cpf[12];
+    char endereco[101];
+    int ativo;
+    struct Professor *prox;
+} Professor;
+
+typedef struct Responsavel {
+    int matricula_aluno;
+    char nome[MAX_NOME];
+    char telefone[16];
+    char cpf[12];
+    char endereco[101];
+    int substituto; // 0 = respons�vel, 1 = substituto
+    int ativo;
+    struct Responsavel *prox;
+} Responsavel;
+
+// ==================== VARI�VEIS ====================
+
+Aluno *lista_alunos = NULL;
+Professor *lista_professores = NULL;
+Responsavel *lista_responsaveis = NULL;
+int proxima_matricula = 1;
+
+// ==================== FUN��ES AUXILIARES ====================
+
+int ano_escolar_valido(const char* ano) {
+    int i;
+    for (i = 0; i < MAX_TURMAS; i++) {
+        if (strcmp(ano, anos_validos[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void converter_maiusculo(char* str) {
+    int i = 0;
+    while (str[i]) {
+        str[i] = toupper(str[i]);  // Converte cada caractere para mai�sculo
+        i++;
+    }
+}
+
+// ==================== FUN��ES DE ARQUIVO ====================
+
+void salvar_em_arquivo() {
+    FILE *fp = fopen("BD.txt", "w");
+    if (fp == NULL) {
+        printf("Erro ao abrir arquivo para escrita.\n");
+        return;
+    }
+
+    Aluno *a = lista_alunos;
+    while (a != NULL) {
+        if (a->ativo) {
+            fprintf(fp, "A;%d;%s;%s;%s;%s\n",
+                    a->matricula, a->nome, a->data_nascimento,
+                    a->comorbidades, a->ano_escolar);
+        }
+        a = a->prox;
+    }
+
+    Professor *p = lista_professores;
+    while (p != NULL) {
+        if (p->ativo) {
+            fprintf(fp, "P;%s;%s;%s;%s;%s\n",
+                    p->ano_escolar, p->nome, p->telefone,
+                    p->cpf, p->endereco);
+        }
+        p = p->prox;
+    }
+
+    Responsavel *r = lista_responsaveis;
+    while (r != NULL) {
+        if (r->ativo) {
+            fprintf(fp, "R;%d;%s;%s;%s;%s;%d\n",
+                    r->matricula_aluno, r->nome, r->telefone,
+                    r->cpf, r->endereco, r->substituto);
+        }
+        r = r->prox;
+    }
+
+    fclose(fp);
+}
+
+void carregar_arquivo() {
+    FILE *fp = fopen("BD.txt", "r");
+    if (fp == NULL) return;
+
+    char tipo;
+    while ((tipo = fgetc(fp)) != EOF) {
+        if (tipo == 'A') {
+            Aluno *a = (Aluno*) malloc(sizeof(Aluno));
+            if (fscanf(fp, ";%d;%49[^;];%10[^;];%199[^;];%2s\n",
+                       &a->matricula, a->nome, a->data_nascimento,
+                       a->comorbidades, a->ano_escolar) == 5) {
+                a->ativo = 1;
+                a->prox = lista_alunos;
+                lista_alunos = a;
+                if (a->matricula >= proxima_matricula) {
+                    proxima_matricula = a->matricula + 1;
+                }
+            } else {
+                free(a);
+            }
+        } else if (tipo == 'P') {
+            Professor *p = (Professor*) malloc(sizeof(Professor));
+            if (fscanf(fp, ";%2s;%49[^;];%15[^;];%11[^;];%100[^\n]\n",
+                       p->ano_escolar, p->nome, p->telefone,
+                       p->cpf, p->endereco) == 5) {
+                p->ativo = 1;
+                p->prox = lista_professores;
+                lista_professores = p;
+            } else {
+                free(p);
+            }
+        } else if (tipo == 'R') {
+            Responsavel *r = (Responsavel*) malloc(sizeof(Responsavel));
+            if (fscanf(fp, ";%d;%49[^;];%15[^;];%11[^;];%100[^;];%d\n",
+                       &r->matricula_aluno, r->nome, r->telefone,
+                       r->cpf, r->endereco, &r->substituto) == 6) {
+                r->ativo = 1;
+                r->prox = lista_responsaveis;
+                lista_responsaveis = r;
+            } else {
+                free(r);
+            }
+        } else {
+            fscanf(fp, "%*[^\n]\n");
+        }
+    }
+
+    fclose(fp);
+}
+
+// ==================== FUN��ES DE CADASTRO ====================
+
+void registrar_aluno() {
+    Aluno *a = (Aluno*) malloc(sizeof(Aluno));
+    if (!a) return;
+
+    a->matricula = proxima_matricula++;
+    a->ativo = 1;
+
+    printf("Nome: ");
+    scanf(" %49[^\n]", a->nome);
+    printf("Ano de nascimento (YYYY): ");
+    int ano, mes, dia;
+    scanf("%d", &ano);
+    printf("M�s de nascimento (MM): ");
+    scanf("%d", &mes);
+    printf("Dia de nascimento (DD): ");
+    scanf("%d", &dia);
+    sprintf(a->data_nascimento, "%04d-%02d-%02d", ano, mes, dia);
+
+    printf("Comorbidades: ");
+    scanf(" %199[^\n]", a->comorbidades);
+    printf("Ano escolar (ex: 1M a 6T): ");
+    scanf(" %2s", a->ano_escolar);
+
+    // Garantir que o ano escolar esteja em mai�sculas
+    converter_maiusculo(a->ano_escolar);
+
+    if (!ano_escolar_valido(a->ano_escolar)) {
+        printf("Ano escolar inv�lido!\n");
+        free(a);
+        return;
+    }
+
+    a->prox = lista_alunos;
+    lista_alunos = a;
+    salvar_em_arquivo();
+    printf("\nAluno cadastrado com sucesso! Matr�cula: %d\n\n", a->matricula);
+}
+
+void consultar_aluno() {
+    int matricula;
+    printf("Digite a matr�cula do aluno: ");
+    scanf("%d", &matricula);
+
+    Aluno *a = lista_alunos;
+    while (a != NULL) {
+        if (a->matricula == matricula && a->ativo) {
+            printf("Matr�cula: %d\n", a->matricula);
+            printf("Nome: %s\n", a->nome);
+            printf("Data de Nascimento: %s\n", a->data_nascimento);
+            printf("Comorbidades: %s\n", a->comorbidades);
+            printf("Ano Escolar: %s\n", a->ano_escolar);
+            return;
+        }
+        a = a->prox;
+    }
+    printf("Aluno n�o encontrado.\n\n");
+}
+
+void deletar_aluno() {
+    int matricula;
+    printf("Digite a matr�cula do aluno a ser deletado: ");
+    scanf("%d", &matricula);
+
+    Aluno *a = lista_alunos;
+    Aluno *ant = NULL;
+    while (a != NULL) {
+        if (a->matricula == matricula && a->ativo) {
+            a->ativo = 0;  // Marca como deletado
+            if (ant) {
+                ant->prox = a->prox;
+            } else {
+                lista_alunos = a->prox;
+            }
+            free(a);
+            salvar_em_arquivo();
+            printf("Aluno deletado com sucesso!\n\n");
+            return;
+        }
+        ant = a;
+        a = a->prox;
+    }
+    printf("Aluno n�o encontrado.\n\n");
+}
+
+void registrar_professor() {
+    Professor *p = (Professor*) malloc(sizeof(Professor));
+    if (!p) return;
+
+    printf("Ano escolar: ");
+    scanf(" %2s", p->ano_escolar);
+
+    // Garantir que o ano escolar esteja em mai�sculas
+    converter_maiusculo(p->ano_escolar);
+
+    printf("Nome: ");
+    scanf(" %49[^\n]", p->nome);
+    printf("Telefone: ");
+    scanf(" %15[^\n]", p->telefone);
+    printf("CPF: ");
+    scanf(" %11[^\n]", p->cpf);
+    printf("Endere�o: ");
+    scanf(" %100[^\n]", p->endereco);
+
+    p->ativo = 1;
+    p->prox = lista_professores;
+    lista_professores = p;
+    salvar_em_arquivo();
+    printf("\nProfessor registrado com sucesso!\n\n");
+}
+
+void consultar_professor() {
+    char ano[3];
+    printf("Digite o ano escolar do professor: ");
+    scanf(" %2s", ano);
+
+    // Garantir que o ano escolar esteja em mai�sculas
+    converter_maiusculo(ano);
+
+    Professor *p = lista_professores;
+    while (p != NULL) {
+        if (strcmp(p->ano_escolar, ano) == 0 && p->ativo) {
+            printf("Nome: %s\n", p->nome);
+            printf("Telefone: %s\n", p->telefone);
+            printf("CPF: %s\n", p->cpf);
+            printf("Endere�o: %s\n", p->endereco);
+            return;
+        }
+        p = p->prox;
+    }
+    printf("Professor n�o encontrado.\n\n");
+}
+
+void registrar_responsavel(int substituto) {
+    Responsavel *r = (Responsavel*) malloc(sizeof(Responsavel));
+    if (!r) return;
+
+    printf("Matr�cula do aluno: ");
+    scanf("%d", &r->matricula_aluno);
+    printf("Nome: ");
+    scanf(" %49[^\n]", r->nome);
+    printf("Telefone: ");
+    scanf(" %15[^\n]", r->telefone);
+    printf("CPF: ");
+    scanf(" %11[^\n]", r->cpf);
+    printf("Endere�o: ");
+    scanf(" %100[^\n]", r->endereco);
+    r->substituto = substituto;
+    r->ativo = 1;
+    r->prox = lista_responsaveis;
+    lista_responsaveis = r;
+    salvar_em_arquivo();
+    printf("\nRespons�vel registrado com sucesso!\n\n");
+}
+
+void consultar_responsaveis() {
+    int matricula;
+    printf("Digite a matr�cula do aluno para consultar os respons�veis: ");
+    scanf("%d", &matricula);
+
+    Responsavel *r = lista_responsaveis;
+    int encontrados = 0;
+    while (r != NULL) {
+        if (r->matricula_aluno == matricula && r->ativo) {
+            printf("Respons�vel: %s\n", r->nome);
+            printf("Telefone: %s\n", r->telefone);
+            printf("CPF: %s\n", r->cpf);
+            printf("Endere�o: %s\n", r->endereco);
+            printf("Substituto: %s\n\n", r->substituto ? "Sim" : "N�o");
+            encontrados = 1;
+        }
+        r = r->prox;
+    }
+    if (!encontrados) {
+        printf("Nenhum respons�vel encontrado.\n\n");
+    }
+}
+
+// ==================== FUN��O MAIN ====================
+
+int main() {
+    carregar_arquivo();
+
+    int opcao;
+    while (1) {
+        system("cls");
+        printf("===== MENU =====\n");
+        printf("1. Consultar aluno\n");
+        printf("2. Registrar aluno\n");
+        printf("3. Deletar aluno\n");
+        printf("4. Registrar professor\n");
+        printf("5. Consultar professor\n");
+        printf("6. Registrar respons�vel\n");
+        printf("7. Registrar respons�vel substituto\n");
+        printf("8. Consultar respons�veis\n");
+        printf("9. Sair\n");
+        printf("Escolha uma op��o: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1: consultar_aluno(); break;
+            case 2: registrar_aluno(); break;
+            case 3: deletar_aluno(); break;
+            case 4: registrar_professor(); break;
+            case 5: consultar_professor(); break;
+            case 6: registrar_responsavel(0); break;
+            case 7: registrar_responsavel(1); break;
+            case 8: consultar_responsaveis(); break;
+            case 9: printf("Encerrando...\n"); return 0;
+            default: printf("Op��o inv�lida!\n\n");
+        }
+
+        getch();
+    }
+
+    return 0;
+}
+
+// ==================== SUPORTE WinMain ====================
+
+#ifdef _WIN32
+#include <windows.h>
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    return main();
+}
+#endif
