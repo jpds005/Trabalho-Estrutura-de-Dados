@@ -41,19 +41,19 @@ typedef struct Responsavel {
     char telefone[16];
     char cpf[12];
     char endereco[101];
-    int substituto; // 0 = respons�vel, 1 = substituto
+    int substituto; // 0 = responsável, 1 = substituto
     int ativo;
     struct Responsavel *prox;
 } Responsavel;
 
-// ==================== VARI�VEIS ====================
+// ==================== VARIÁVEIS ====================
 
 Aluno *lista_alunos = NULL;
 Professor *lista_professores = NULL;
 Responsavel *lista_responsaveis = NULL;
 int proxima_matricula = 1;
 
-// ==================== FUN��ES AUXILIARES ====================
+// ==================== FUNÇÕES AUXILIARES ====================
 
 int ano_escolar_valido(const char* ano) {
     int i;
@@ -68,12 +68,12 @@ int ano_escolar_valido(const char* ano) {
 void converter_maiusculo(char* str) {
     int i = 0;
     while (str[i]) {
-        str[i] = toupper(str[i]);  // Converte cada caractere para mai�sculo
+        str[i] = toupper(str[i]);  // Converte cada caractere para maiúsculo
         i++;
     }
 }
 
-// ==================== FUN��ES DE ARQUIVO ====================
+// ==================== FUNÇÕES DE ARQUIVO ====================
 
 void salvar_em_arquivo() {
     FILE *fp = fopen("BD.txt", "w");
@@ -165,7 +165,7 @@ void carregar_arquivo() {
     fclose(fp);
 }
 
-// ==================== FUN��ES DE CADASTRO ====================
+// ==================== FUNÇÕES DE CADASTRO ====================
 
 void registrar_aluno() {
     Aluno *a = (Aluno*) malloc(sizeof(Aluno));
@@ -179,7 +179,7 @@ void registrar_aluno() {
     printf("Ano de nascimento (YYYY): ");
     int ano, mes, dia;
     scanf("%d", &ano);
-    printf("M�s de nascimento (MM): ");
+    printf("Mês de nascimento (MM): ");
     scanf("%d", &mes);
     printf("Dia de nascimento (DD): ");
     scanf("%d", &dia);
@@ -190,11 +190,11 @@ void registrar_aluno() {
     printf("Ano escolar (ex: 1M a 6T): ");
     scanf(" %2s", a->ano_escolar);
 
-    // Garantir que o ano escolar esteja em mai�sculas
+    // Garantir que o ano escolar esteja em maiúsculas
     converter_maiusculo(a->ano_escolar);
 
     if (!ano_escolar_valido(a->ano_escolar)) {
-        printf("Ano escolar inv�lido!\n");
+        printf("Ano escolar inválido!\n");
         free(a);
         return;
     }
@@ -202,18 +202,18 @@ void registrar_aluno() {
     a->prox = lista_alunos;
     lista_alunos = a;
     salvar_em_arquivo();
-    printf("\nAluno cadastrado com sucesso! Matr�cula: %d\n\n", a->matricula);
+    printf("\nAluno cadastrado com sucesso! Matrícula: %d\n\n", a->matricula);
 }
 
 void consultar_aluno() {
     int matricula;
-    printf("Digite a matr�cula do aluno: ");
+    printf("Digite a matrícula do aluno: ");
     scanf("%d", &matricula);
 
     Aluno *a = lista_alunos;
     while (a != NULL) {
         if (a->matricula == matricula && a->ativo) {
-            printf("Matr�cula: %d\n", a->matricula);
+            printf("Matrícula: %d\n", a->matricula);
             printf("Nome: %s\n", a->nome);
             printf("Data de Nascimento: %s\n", a->data_nascimento);
             printf("Comorbidades: %s\n", a->comorbidades);
@@ -222,12 +222,12 @@ void consultar_aluno() {
         }
         a = a->prox;
     }
-    printf("Aluno n�o encontrado.\n\n");
+    printf("Aluno não encontrado.\n\n");
 }
 
 void deletar_aluno() {
     int matricula;
-    printf("Digite a matr�cula do aluno a ser deletado: ");
+    printf("Digite a matrícula do aluno a ser deletado: ");
     scanf("%d", &matricula);
 
     Aluno *a = lista_alunos;
@@ -248,7 +248,7 @@ void deletar_aluno() {
         ant = a;
         a = a->prox;
     }
-    printf("Aluno n�o encontrado.\n\n");
+    printf("Aluno não encontrado.\n\n");
 }
 
 void registrar_professor() {
@@ -258,7 +258,7 @@ void registrar_professor() {
     printf("Ano escolar: ");
     scanf(" %2s", p->ano_escolar);
 
-    // Garantir que o ano escolar esteja em mai�sculas
+    // Garantir que o ano escolar esteja em maiúsculas
     converter_maiusculo(p->ano_escolar);
 
     printf("Nome: ");
@@ -267,7 +267,7 @@ void registrar_professor() {
     scanf(" %15[^\n]", p->telefone);
     printf("CPF: ");
     scanf(" %11[^\n]", p->cpf);
-    printf("Endere�o: ");
+    printf("Endereço: ");
     scanf(" %100[^\n]", p->endereco);
 
     p->ativo = 1;
@@ -282,7 +282,7 @@ void consultar_professor() {
     printf("Digite o ano escolar do professor: ");
     scanf(" %2s", ano);
 
-    // Garantir que o ano escolar esteja em mai�sculas
+    // Garantir que o ano escolar esteja em maiúsculas
     converter_maiusculo(ano);
 
     Professor *p = lista_professores;
@@ -291,19 +291,19 @@ void consultar_professor() {
             printf("Nome: %s\n", p->nome);
             printf("Telefone: %s\n", p->telefone);
             printf("CPF: %s\n", p->cpf);
-            printf("Endere�o: %s\n", p->endereco);
+            printf("Endereço: %s\n", p->endereco);
             return;
         }
         p = p->prox;
     }
-    printf("Professor n�o encontrado.\n\n");
+    printf("Professor não encontrado.\n\n");
 }
 
 void registrar_responsavel(int substituto) {
     Responsavel *r = (Responsavel*) malloc(sizeof(Responsavel));
     if (!r) return;
 
-    printf("Matr�cula do aluno: ");
+    printf("Matrícula do aluno: ");
     scanf("%d", &r->matricula_aluno);
     printf("Nome: ");
     scanf(" %49[^\n]", r->nome);
@@ -311,40 +311,40 @@ void registrar_responsavel(int substituto) {
     scanf(" %15[^\n]", r->telefone);
     printf("CPF: ");
     scanf(" %11[^\n]", r->cpf);
-    printf("Endere�o: ");
+    printf("Endereço: ");
     scanf(" %100[^\n]", r->endereco);
     r->substituto = substituto;
     r->ativo = 1;
     r->prox = lista_responsaveis;
     lista_responsaveis = r;
     salvar_em_arquivo();
-    printf("\nRespons�vel registrado com sucesso!\n\n");
+    printf("\nResponsável registrado com sucesso!\n\n");
 }
 
 void consultar_responsaveis() {
     int matricula;
-    printf("Digite a matr�cula do aluno para consultar os respons�veis: ");
+    printf("Digite a matrícula do aluno para consultar os responsáveis: ");
     scanf("%d", &matricula);
 
     Responsavel *r = lista_responsaveis;
     int encontrados = 0;
     while (r != NULL) {
         if (r->matricula_aluno == matricula && r->ativo) {
-            printf("Respons�vel: %s\n", r->nome);
+            printf("Responsável: %s\n", r->nome);
             printf("Telefone: %s\n", r->telefone);
             printf("CPF: %s\n", r->cpf);
-            printf("Endere�o: %s\n", r->endereco);
-            printf("Substituto: %s\n\n", r->substituto ? "Sim" : "N�o");
+            printf("Endereço: %s\n", r->endereco);
+            printf("Substituto: %s\n\n", r->substituto ? "Sim" : "Não");
             encontrados = 1;
         }
         r = r->prox;
     }
     if (!encontrados) {
-        printf("Nenhum respons�vel encontrado.\n\n");
+        printf("Nenhum responsável encontrado.\n\n");
     }
 }
 
-// ==================== FUN��O MAIN ====================
+// ==================== FUNÇÃO MAIN ====================
 
 int main() {
     carregar_arquivo();
@@ -358,11 +358,11 @@ int main() {
         printf("3. Deletar aluno\n");
         printf("4. Registrar professor\n");
         printf("5. Consultar professor\n");
-        printf("6. Registrar respons�vel\n");
-        printf("7. Registrar respons�vel substituto\n");
-        printf("8. Consultar respons�veis\n");
+        printf("6. Registrar responsável\n");
+        printf("7. Registrar responsável substituto\n");
+        printf("8. Consultar responsáveis\n");
         printf("9. Sair\n");
-        printf("Escolha uma op��o: ");
+        printf("Escolha uma opção: ");
         scanf("%d", &opcao);
 
         switch (opcao) {
@@ -375,7 +375,7 @@ int main() {
             case 7: registrar_responsavel(1); break;
             case 8: consultar_responsaveis(); break;
             case 9: printf("Encerrando...\n"); return 0;
-            default: printf("Op��o inv�lida!\n\n");
+            default: printf("Opção inválida!\n\n");
         }
 
         getch();
