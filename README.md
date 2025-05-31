@@ -1,1 +1,2 @@
-Projeto de um Estrutura de Dados para uma escola imaginária. Nesse repositório estão o código escrito em C++, junto dos protótipos da equipe.
+Projeto de usando uma Estrutura de Dados (Lista Encadeada) para uma escola imaginária.
+Nesse repositório está contido o código escrito em C++.
